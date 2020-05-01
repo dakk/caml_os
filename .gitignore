@@ -1,0 +1,12 @@
+*.exe
+*.out
+*.app
+*.elf
+*.iso
+*.o
+*.a
+*.cmi
+*.cmx
+bochslog.txt
+build/*
+.depend
