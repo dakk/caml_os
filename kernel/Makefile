@@ -35,15 +35,15 @@ $(OCAMLKERNEL): $(CMI) $(CMX)
 $(LIBOCAML): $(CMI) $(CMX) $(OCAMLKERNEL)
 	rm -rf libasmrun stdlib k
 	mkdir libasmrun; cd libasmrun; ar -x $(CAMLLIB)/libasmrun.a
-	mkdir -p str; cd str; ar -x $(CAMLLIB)/str.a
+	# mkdir -p str; cd str; ar -x $(CAMLLIB)/str.a
 	ar -qc $(LIBOCAML) libasmrun/*.o mlkernel.o
-	rm -rf libasmrun str
+	rm -rf libasmrun
 
 %.cmi: %.mli
 	$(OCAMLOPT) -c $< $(OCAMLFLAGS_$@) -o $@
 
 %.cmx: %.ml
-	$(OCAMLOPT) -c $< $(OCAMLFLAGS_$@) -o $@
+	$(OCAMLOPT) -dalloc -c $< $(OCAMLFLAGS_$@) -o $@
 
 depend: .depend
 

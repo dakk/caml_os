@@ -2,11 +2,14 @@ external clear_screen : unit -> unit = "clear_screen" [@@noalloc]
 external put_char : char -> unit = "put_char" [@@noalloc]
 external skip_char : int -> unit = "skip_char" [@@noalloc]
 
-let a = ref(true);
+(* let a = ref(true); *)
+type t = {a: int};;
+let c = {a= 12};;
 
 external _mem_isetb : int -> char -> unit = "_mem_isetb" [@@noalloc]
 
 let rec kmain () =
+  let c = {c with a=13} in
   clear_screen ();
   Vid.clear ();
   Vid.putc 'l';

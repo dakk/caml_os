@@ -1,25 +1,24 @@
 #include <types.h>
 
-
-char allocated[0xFFFFF];
-__u32 all = 0;
+char *heap;
 
 char* malloc (size_t size) {
-	char *r = allocated + all;
-	all += size;
-	return r;
+	char *res = heap;
+	heap = heap + size;
+	return res;
 }
 
-void free (char *m) {
 
+void *realloc(void *ptr, size_t size) {
+	return malloc(size);
 }
 
-void *memcpy(char *a , const char *b, size_t dim)
-{
+void free (char *m) { }
+
+void *memcpy(char *a , const char *b, size_t dim) {
 	__u32 x = 0;
 	
-	while(x < dim)
-	{
+	while(x < dim) {
 		*a = *b;
 		a++; 
 		b++;
@@ -28,8 +27,7 @@ void *memcpy(char *a , const char *b, size_t dim)
 	return (void *) a;
 }
 
-void *memset(void *s, int c, size_t n)
-{
+void *memset(void *s, int c, size_t n) {
 	char *a = s;
 	size_t i;
 	
@@ -39,16 +37,18 @@ void *memset(void *s, int c, size_t n)
 	return s;
 }
 
-void *memmove(char *a, char *b, size_t dim)
-{
+void *memmove(char *a, char *b, size_t dim) {
 	size_t i;
-	for(i = 0; i < dim; i++)
-		b[i] = a[i];
+	for(i = 0; i < dim; i++) {
+		*b = *a;
+		a++;
+		b++;
+	}
+	return (void *) a;
 }
 
 
-int memcmp(const void *a, const void *b, size_t dim)
-{
+int memcmp(const void *a, const void *b, size_t dim) {
 	return 0;
 }
 
@@ -89,7 +89,6 @@ void round () {}
 void sigaltstack() {}
 void unlink() {}
 void exit () {}
-void realloc() {};
 void mmap64() {}
 void munmap() {}
 void vfprintf() {}
