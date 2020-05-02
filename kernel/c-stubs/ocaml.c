@@ -21,12 +21,6 @@ void put_char(value c) {
 	}
 }
 
-void skip_char (value c) {
-	for(int i = 0; i < Int_val(c); i++)
-		put_char(Val_int(' '));
-}
-
-
 
 void clear_screen() {
 	for(int i = 0; i < VIDEO_SIZE; ++i) {

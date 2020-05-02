@@ -13,9 +13,9 @@ ARCH_RUN_OBJS	= $(ARCH)/boot.o
 MK_C	 = $(wildcard c-stubs/*.c) 
 MK_OBJS	 = $(MK_C:.c=.o)
 OBJS	 = $(MAIN_RUN_OBJS) $(ARCH_RUN_OBJS) $(MK_OBJS)
-LIBOCAML	= libml.a
+LIBOCAML	= build/libml.a
 CAMLLIB		= /usr/lib/ocaml
-OCAMLKERNEL	= mlkernel.o
+OCAMLKERNEL	= build/mlkernel.o
 MLI=vid.mli mem.mli
 ML=mem.ml vid.ml kmain.ml
 CMX	 = $(ML:.ml=.cmx)
@@ -25,39 +25,39 @@ CMXA =
 all: kernel depend
 
 kernel: $(LIBOCAML) $(OBJS) $(LINK_SCRIPT)
-	$(LD) $(LDFLAGS) -static -o kernel.elf \
+	$(LD) $(LDFLAGS) -static -o build/kernel.elf \
         $(OBJS) $(LIBOCAML) -Tkernel.ld
 
 
 $(OCAMLKERNEL): $(CMI) $(CMX)
-	$(OCAMLOPT) -linkpkg $(CMXA) $(CMX) -output-obj -o $@
+	$(OCAMLOPT) -linkpkg -I build/ $(CMXA) $(CMX) -output-obj -o $@
 
 $(LIBOCAML): $(CMI) $(CMX) $(OCAMLKERNEL)
-	rm -rf libasmrun stdlib k
-	mkdir libasmrun; cd libasmrun; ar -x $(CAMLLIB)/libasmrun.a
+	rm -rf build/libasmrun build/stdlib build/k
+	mkdir build/libasmrun; cd build/libasmrun; ar -x $(CAMLLIB)/libasmrun.a
 	# mkdir -p str; cd str; ar -x $(CAMLLIB)/str.a
-	ar -qc $(LIBOCAML) libasmrun/*.o mlkernel.o
-	rm -rf libasmrun
+	ar -qc $(LIBOCAML) build/libasmrun/*.o build/mlkernel.o
+	rm -rf build/libasmrun
 
 %.cmi: %.mli
-	$(OCAMLOPT) -c $< $(OCAMLFLAGS_$@) -o $@
+	$(OCAMLOPT) -c $< $(OCAMLFLAGS_$@) -I build/ -o build/$@
 
 %.cmx: %.ml
-	$(OCAMLOPT) -dalloc -c $< $(OCAMLFLAGS_$@) -o $@
+	$(OCAMLOPT) -dalloc -c $< $(OCAMLFLAGS_$@) -I build/ -o build/$@
 
 depend: .depend
 
 .depend: $(MLI) $(ML)
-	$(OCAMLDEP) $(MLI) $(ML) > .depend
+	$(OCAMLDEP) $(MLI) $(ML) > build/.depend
 
 run:
-	qemu-system-x86_64 -kernel kernel.elf
+	qemu-system-x86_64 -kernel build/kernel.elf
 
 dump:
-	objdump -C -d -mi386:x86-64:intel kernel.elf
+	objdump -C -d -mi386:x86-64:intel build/kernel.elf
 
 clean:
-	rm -fr ../build/*
+	rm -fr ../build/* build/*
 	rm -f *.o *.a *.cmi *.cmx *.elf *.depend
 	rm -f arch/x86_64/*.o
 	rm -f c-stubs/*.o 

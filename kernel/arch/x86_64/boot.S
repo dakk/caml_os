@@ -67,6 +67,7 @@ bootstrap:
 	/* set IA32_EFER.LME */
 	movl    $0xc0000080, %ecx
 	rdmsr
+
 	/* set the PAE and SYSENTER bits */
 	orl     $0x00000101, %eax
 	wrmsr
@@ -125,7 +126,7 @@ boot64_high:
 	movq   $0x0,init_pml4
 	invlpg 0
 
-	/* go to our C entry point */
+	/* go to our caml entry point */
 	call EXT_C(camlKmain__entry)
 
 boot64_hang:

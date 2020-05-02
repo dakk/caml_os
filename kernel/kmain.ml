@@ -1,32 +1,22 @@
 external clear_screen : unit -> unit = "clear_screen" [@@noalloc]
 external put_char : char -> unit = "put_char" [@@noalloc]
-external skip_char : int -> unit = "skip_char" [@@noalloc]
 
 (* let a = ref(true); *)
-type t = {a: int};;
-let c = {a= 12};;
 
-external _mem_isetb : int -> char -> unit = "_mem_isetb" [@@noalloc]
 
 let rec kmain () =
-  let c = {c with a=13} in
+  Mem.init ();
   clear_screen ();
-  Vid.clear ();
-  Vid.putc 'l';
-  put_char 'H';
-  put_char 'e';
-  put_char 'l';
-  put_char 'l';
-  put_char 'o';
-  skip_char 2;
-  put_char 'W';
-  put_char 'o';
-  put_char 'r';
-  put_char 'l';
-  put_char 'd';
-  put_char '!';
-  _mem_isetb 0 'c';
-  _mem_isetb 2 'a';
+  String.iter put_char "Hello";
+  Vid.putc 'V';
+  (* Vid.puts "Hello"; *)
+  let a = Mem.get_vma 0x000b8000 in
+  Bytes.unsafe_set a 0 'c';
+
+  let b = Mem.alloc 1 in
+  let _ = Mem.setc b 'B' in 
+  Mem.setc a @@ Mem.getc b;
+  String.iter Vid.putc "V";
 ;;
 
 kmain ();;

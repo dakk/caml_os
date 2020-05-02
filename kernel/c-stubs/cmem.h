@@ -5,11 +5,6 @@
 #include <caml/mlvalues.h>
 
 /** returns a pointer to the vma address + offset */
-value _mem_get_vma(value offset);
-
-/** returns a pointer to the vma address + offset */
 value _mem_get(value i);
-
-
 
 #endif

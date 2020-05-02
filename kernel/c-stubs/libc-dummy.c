@@ -3,48 +3,48 @@
 char *heap;
 
 char* malloc (size_t size) {
-	char *res = heap;
-	heap = heap + size;
-	return res;
+	// char *res = heap;
+	// heap = heap + size;
+	// return res;
 }
 
 
 void *realloc(void *ptr, size_t size) {
-	return malloc(size);
+	// return malloc(size);
 }
 
 void free (char *m) { }
 
 void *memcpy(char *a , const char *b, size_t dim) {
-	__u32 x = 0;
+	// __u32 x = 0;
 	
-	while(x < dim) {
-		*a = *b;
-		a++; 
-		b++;
-		x++;
-	}
-	return (void *) a;
+	// while(x < dim) {
+	// 	*a = *b;
+	// 	a++; 
+	// 	b++;
+	// 	x++;
+	// }
+	// return (void *) a;
 }
 
 void *memset(void *s, int c, size_t n) {
-	char *a = s;
-	size_t i;
+	// char *a = s;
+	// size_t i;
 	
-	for (i = 0; i < n; i++, a++)
-		*a = c;
+	// for (i = 0; i < n; i++, a++)
+	// 	*a = c;
 	
-	return s;
+	// return s;
 }
 
 void *memmove(char *a, char *b, size_t dim) {
-	size_t i;
-	for(i = 0; i < dim; i++) {
-		*b = *a;
-		a++;
-		b++;
-	}
-	return (void *) a;
+	// size_t i;
+	// for(i = 0; i < dim; i++) {
+	// 	*b = *a;
+	// 	a++;
+	// 	b++;
+	// }
+	// return (void *) a;
 }
 
 

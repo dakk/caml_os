@@ -10,3 +10,4 @@
 bochslog.txt
 build/*
 .depend
+kernel/build/*
