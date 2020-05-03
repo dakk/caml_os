@@ -130,9 +130,9 @@ extern int c_printf(const char *fmt, ...);
 extern int gettimeofday(struct timeval *tv, struct timezone *tz);
 extern void usleep(unsigned long usec);
 extern void *malloc_frame_aligned(size_t n);
-extern void *memset(void *s, int c, size_t n);
-extern void *memmove(void *s, const void *src, size_t n);
-extern void *memcpy(void *s, const void *src, size_t n);
+// extern void *memset(void *s, int c, size_t n);
+// extern void *memmove(void *s, const void *src, size_t n);
+// extern void *memcpy(void *s, const void *src, size_t n);
 
 extern void *heap, *heaplimit, *last_seen;
 

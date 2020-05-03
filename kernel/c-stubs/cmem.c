@@ -5,7 +5,7 @@
 CAMLprim value _mem_get(value addr)
 {
   CAMLparam1(addr);
-  CAMLreturn(addr);
+  CAMLreturn((char *) Int_val(addr));
 }
 
 CAMLprim value _mem_get_vma(value offset)

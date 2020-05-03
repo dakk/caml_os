@@ -49,7 +49,7 @@ $(LIBOCAML): $(CMI) $(CMX) $(OCAMLKERNEL)
 	$(OCAMLOPT) -g -c $< $(OCAMLFLAGS_$@) -I build/ -o build/$@
 
 %.cmx: %.ml
-	$(OCAMLOPT) -g -c $< $(OCAMLFLAGS_$@) -I build/ -o build/$@
+	$(OCAMLOPT) -dalloc -g -c $< $(OCAMLFLAGS_$@) -I build/ -o build/$@
 
 depend: .depend
 
