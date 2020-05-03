@@ -317,7 +317,9 @@ void *memset(void *s, int c, size_t n)
   return s;
 }
 
-void *heap, *heaplimit;
+void *heap = KERNEL_VMA;     //0xffffffff80000000;
+void *heaplimit = KERNEL_VMA + 0x200000; //0xfffffffff0000000;
+void *last_seen;
 
 
 /* 
@@ -338,108 +340,108 @@ void *heap, *heaplimit;
 
 void* last_seen;
 
-#ifdef MALLOC
-void *malloc(size_t size)
-{
-  int s = sizeof(void*);
+// #ifdef MALLOC
+// void *malloc(size_t size)
+// {
+//   int s = sizeof(void*);
   
- /* Number of used pages */
-  int pSize = (size >> PageShift) + 1;
-  /* Rounded size */
-  int rSize = pSize << PageShift;
-#ifdef DEBUG
-  c_printf("malloc called (%u - %u)\n",size, rSize);
-#endif
-  void *cur, *new, *prv, *nxt;
-  int b;
-  for (cur = last_seen, b = 0; 
-       cur != last_seen || !b; 
-       b = 1,cur = (*(void**) (cur - 2*s) == NULL) ?
-	      *(void**) (cur - 2*s) : 
-	      *(void**) (heap + HEAP_OFFSET))
-  {
-    if (*(int*)(cur-s) >= rSize + s)
-    {
-      /* We've found the place */
-      new = cur + rSize;
-      prv = *(void**) (cur - 3*s);
-      nxt = *(void**) (cur - 2*s);
-      if (prv)
-	*(void**) (prv - 2*s) = new;
-      if (nxt)
-	*(void**) (nxt - 3*s) = new;
-      *(void**) (new - 3*s) = prv;
-      *(void**) (new - 2*s) = nxt;
-      *(int*)   (new - s)   = *(int*) (cur - s) - rSize;
-      last_seen = nxt;
-      if (cur == *(void**)(heap + HEAP_OFFSET))
-	*(void**)(heap + HEAP_OFFSET) = new;
-      *(int*)(cur - 3*s) = rSize;
-#ifdef DEBUG
-    c_printf ("new: %p (prev: %p, next: %p, size: %d)\n", new, *(void**)(new-3*s), *(void**)(new-2*s), *(int*)(new-s));
-#endif
-      return (cur-2*s);
-    }
-  }
-#ifdef DEBUG
-  c_printf ("Same Player, shoot again\n");
-#endif
-  /* If qemu segfaults, we see nothing */
-  while (1);
-  return NULL;
-}
+//  /* Number of used pages */
+//   int pSize = (size >> PageShift) + 1;
+//   /* Rounded size */
+//   int rSize = pSize << PageShift;
+// #ifdef DEBUG
+//   c_printf("malloc called (%u - %u)\n",size, rSize);
+// #endif
+//   void *cur, *new, *prv, *nxt;
+//   int b;
+//   for (cur = last_seen, b = 0; 
+//        cur != last_seen || !b; 
+//        b = 1,cur = (*(void**) (cur - 2*s) == NULL) ?
+// 	      *(void**) (cur - 2*s) : 
+// 	      *(void**) (heap + HEAP_OFFSET))
+//   {
+//     if (*(int*)(cur-s) >= rSize + s)
+//     {
+//       /* We've found the place */
+//       new = cur + rSize;
+//       prv = *(void**) (cur - 3*s);
+//       nxt = *(void**) (cur - 2*s);
+//       if (prv)
+// 	*(void**) (prv - 2*s) = new;
+//       if (nxt)
+// 	*(void**) (nxt - 3*s) = new;
+//       *(void**) (new - 3*s) = prv;
+//       *(void**) (new - 2*s) = nxt;
+//       *(int*)   (new - s)   = *(int*) (cur - s) - rSize;
+//       last_seen = nxt;
+//       if (cur == *(void**)(heap + HEAP_OFFSET))
+// 	*(void**)(heap + HEAP_OFFSET) = new;
+//       *(int*)(cur - 3*s) = rSize;
+// #ifdef DEBUG
+//     c_printf ("new: %p (prev: %p, next: %p, size: %d)\n", new, *(void**)(new-3*s), *(void**)(new-2*s), *(int*)(new-s));
+// #endif
+//       return (cur-2*s);
+//     }
+//   }
+// #ifdef DEBUG
+//   c_printf ("Same Player, shoot again\n");
+// #endif
+//   /* If qemu segfaults, we see nothing */
+//   while (1);
+//   return NULL;
+// }
 
-void free (void* ptr)
-{
-  int s = sizeof(void*);
-  int size = *(int*) (ptr - s);
-  void *cur, *prv, *nxt, *sup_nxt;
-/*#ifdef DEBUG*/
-  c_printf ("calling free %p\n", ptr);
-/*#endif*/
-  if (!ptr)
-    return;
-  /* find out if we should merge two empty spaces */
-  for (cur = *(void**) (heap + HEAP_OFFSET); *(void**)(cur - 2*s) < ptr; cur = *(void**)(cur - 2*s))
-    if (cur + *(int*) (cur - s) + s == ptr)
-    {
-      if (ptr + size + 3*s == *(void**) (cur - 2*s))
-      {
-	nxt     = *(void**) (cur - 2*s);
-	sup_nxt = *(void**) (nxt - 2*s);
-	*(int*)   (cur - s)      += size + *(int*) (nxt - s) + size + 4*s;
-	*(void**) (cur - 2*s)     = sup_nxt;
-	*(void**) (sup_nxt - 3*s) = cur;
-	c_printf ("free: merged three of them\n");
-      } else
-      {
-	*(int*) (cur - s) += size + s;
-	c_printf ("free: merged with before\n");
-      }
-      return;
-    } else {
-      if (ptr + size + 3*s == *(void**) (cur - 2*s))
-      {
-	nxt     = *(void**) (cur - 2*s);
-	sup_nxt = *(void**) (nxt - 2*s); 
-	*(void**) (ptr - s)   = cur;
-	*(void**)  ptr        = *(void**) (nxt - 2*s);
-	*(int*)   (ptr + s)   = size + 4*s + *(int*) (nxt - s);
-	*(void**) (cur - 2*s) = ptr + 2*s;
-	*(void**) (nxt - 3*s) = ptr + 2*s;
-	c_printf ("free: merged with after\n");
-	return;
-      }
-    }
-  prv = *(void**) (cur - 3*s);
-  *(void**) (ptr - s)   = prv;
-  *(void**)  ptr        = cur;
-  *(int*)   (ptr + s)   = size;
-  *(void**) (prv - 2*s) = ptr + 2*s;
-  *(void**) (cur - 3*s) = ptr + 2*s;
-  c_printf ("free: no merges\n");
-}
-#endif
+// void free (void* ptr)
+// {
+//   int s = sizeof(void*);
+//   int size = *(int*) (ptr - s);
+//   void *cur, *prv, *nxt, *sup_nxt;
+// /*#ifdef DEBUG*/
+//   c_printf ("calling free %p\n", ptr);
+// /*#endif*/
+//   if (!ptr)
+//     return;
+//   /* find out if we should merge two empty spaces */
+//   for (cur = *(void**) (heap + HEAP_OFFSET); *(void**)(cur - 2*s) < ptr; cur = *(void**)(cur - 2*s))
+//     if (cur + *(int*) (cur - s) + s == ptr)
+//     {
+//       if (ptr + size + 3*s == *(void**) (cur - 2*s))
+//       {
+// 	nxt     = *(void**) (cur - 2*s);
+// 	sup_nxt = *(void**) (nxt - 2*s);
+// 	*(int*)   (cur - s)      += size + *(int*) (nxt - s) + size + 4*s;
+// 	*(void**) (cur - 2*s)     = sup_nxt;
+// 	*(void**) (sup_nxt - 3*s) = cur;
+// 	c_printf ("free: merged three of them\n");
+//       } else
+//       {
+// 	*(int*) (cur - s) += size + s;
+// 	c_printf ("free: merged with before\n");
+//       }
+//       return;
+//     } else {
+//       if (ptr + size + 3*s == *(void**) (cur - 2*s))
+//       {
+// 	nxt     = *(void**) (cur - 2*s);
+// 	sup_nxt = *(void**) (nxt - 2*s); 
+// 	*(void**) (ptr - s)   = cur;
+// 	*(void**)  ptr        = *(void**) (nxt - 2*s);
+// 	*(int*)   (ptr + s)   = size + 4*s + *(int*) (nxt - s);
+// 	*(void**) (cur - 2*s) = ptr + 2*s;
+// 	*(void**) (nxt - 3*s) = ptr + 2*s;
+// 	c_printf ("free: merged with after\n");
+// 	return;
+//       }
+//     }
+//   prv = *(void**) (cur - 3*s);
+//   *(void**) (ptr - s)   = prv;
+//   *(void**)  ptr        = cur;
+//   *(int*)   (ptr + s)   = size;
+//   *(void**) (prv - 2*s) = ptr + 2*s;
+//   *(void**) (cur - 3*s) = ptr + 2*s;
+//   c_printf ("free: no merges\n");
+// }
+// #endif
 
 #ifndef MALLOC
 void* malloc(size_t size)
@@ -463,6 +465,8 @@ void free(void *ptr)
 }
 
 #endif
+
+
 void* malloc_frame_aligned(size_t size)
 {
   int offs = (int)heap % FRAME_SIZE;

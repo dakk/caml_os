@@ -39,11 +39,14 @@ $(LIBOCAML): $(CMI) $(CMX) $(OCAMLKERNEL)
 	ar -qc $(LIBOCAML) build/libasmrun/*.o build/mlkernel.o
 	rm -rf build/libasmrun
 
+%.o: %.asm
+	nasm -f elf64 -o $@ $<
+
 %.cmi: %.mli
-	$(OCAMLOPT) -c $< $(OCAMLFLAGS_$@) -I build/ -o build/$@
+	$(OCAMLOPT) -g -c $< $(OCAMLFLAGS_$@) -I build/ -o build/$@
 
 %.cmx: %.ml
-	$(OCAMLOPT) -dalloc -c $< $(OCAMLFLAGS_$@) -I build/ -o build/$@
+	$(OCAMLOPT) -dalloc -g -c $< $(OCAMLFLAGS_$@) -I build/ -o build/$@
 
 depend: .depend
 
@@ -54,7 +57,8 @@ run:
 	qemu-system-x86_64 -kernel build/kernel.elf
 
 dump:
-	objdump -C -d -mi386:x86-64:intel build/kernel.elf
+	objdump -g -C -d -mi386:x86-64:intel build/kernel.elf > kernel.S
+	objdump -g -d -mi386:x86-64:intel build/kmain.o > kmain.S
 
 clean:
 	rm -fr ../build/* build/*

@@ -127,7 +127,8 @@ boot64_high:
 	invlpg 0
 
 	/* go to our caml entry point */
-	call EXT_C(camlKmain__entry)
+	call EXT_C(kmain)
+	// jmp EXT_C(camlKmain__entry)
 
 boot64_hang:
 	hlt

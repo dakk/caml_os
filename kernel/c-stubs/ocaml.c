@@ -27,3 +27,10 @@ void clear_screen() {
 		vidmem[i] = ' ' | attr;
 	}
 }
+
+
+extern void camlKmain__entry();
+
+void kmain () {
+	camlKmain__entry();
+}
