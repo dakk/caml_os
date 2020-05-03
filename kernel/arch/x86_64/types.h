@@ -1,8 +1,6 @@
 #ifndef ARCH_X86_64_TYPES_H
 #define ARCH_X86_64_TYPES_H
 
-#include "boot.h"
-
 typedef unsigned char      __u8;
 typedef unsigned short     __u16;
 typedef unsigned int       __u32;

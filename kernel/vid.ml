@@ -4,15 +4,21 @@ let _vmem = 0xB8000;;
 
 let _vx = ref(0);;
 let _vy = ref(0);;
-let _vattr = ref(Char.chr 0x0);;
+let _vattr = ref(Char.chr 0x1e00);;
 
 let set_attr a = _vattr := a;;
 
 let clear () = 
-  (* Mem.setb _vx 0;
-  Mem.setb _vy 0; *)
+  (* let rec cl n = match n with
+  | n when n >= (80 * 25) -> ()
+  | n -> Bytes.unsafe_set (Mem.get _vmem) (n * 2) ' ';
+    Bytes.unsafe_set (Mem.get _vmem) (n * 2 + 1) @@ Char.chr 0x1e00;
+    cl @@ n+1
+  in
+  cl 0; *)
   _vx := 0;
   _vy := 1;
+  (* _vattr:= Char.chr 0x1e00; *)
   (* scrive sulla stessa area di memora, anche facendo alloc *)
 ;;
 
