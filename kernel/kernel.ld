@@ -1,87 +1,43 @@
-OUTPUT_FORMAT(elf64-x86-64)
-
-KERNEL_LMA = 0x0000000000200000; /* 2 MEG */
-KERNEL_VMA = 0xffffffff80000000 + KERNEL_LMA;
-
-
-/* fake 
-caml_young_limit = 0x0000000000200000;
-caml_system__frametable = 0x0000000000200000;
-caml_allocN = 0x0000000000200000;
-caml_call_gc = 0x0000000000200000;
-caml_globals_inited = 0x0000000000200000;
-*/
-
-ENTRY(bootstrap)
-
-SECTIONS {
-	. = KERNEL_VMA;
-
-	_start = .;
-	.text : AT(ADDR(.text) - KERNEL_VMA) {
-		_code = .;
+/* The bootloader will look at this image and start execution at the symbol
+   designated as the entry point. */
+ENTRY(_start)
+ 
+/* Tell where the various sections of the object files will be put in the final
+   kernel image. */
+SECTIONS
+{
+	/* Begin putting sections at 1 MiB, a conventional place for kernels to be
+	   loaded at by the bootloader. */
+	. = 1M;
+ 
+	/* First put the multiboot header, as it is required to be put very early
+	   early in the image or the bootloader won't recognize the file format.
+	   Next we'll put the .text section. */
+	.text BLOCK(4K) : ALIGN(4K)
+	{
 		*(.multiboot)
-		*(.text*)
-		*(.gnu.linkonce.t*)
-		. = ALIGN(0x1000);
+		*(.text)
 	}
-
-	.rodata : AT(ADDR(.rodata) - KERNEL_VMA) {
-		_rodata = .;
-		*(.rodata*)
-		*(.gnu.linkonce.r*)
-
-		. = ALIGN(8);
-		__CTOR_LIST__ = .;
-		*(.ctors)
-		__CTOR_END__ = .;
-		
-		. = ALIGN(8);
-		__DTOR_LIST__ = .;
-		*(.dtors)
-		__DTOR_END__ = .;
-		
-		. = ALIGN(8);
-		__INIT_LIST__ = .;
-		KEEP (*(.init_array))
-		__INIT_END__ = .;
-		
-		. = ALIGN(8);
-		__FINI_LIST__ = .;
-		KEEP (*(.fini_array))
-		__FINI_END__ = .;
-
-		. = ALIGN(0x1000);
+ 
+	/* Read-only data. */
+	.rodata BLOCK(4K) : ALIGN(4K)
+	{
+		*(.rodata)
 	}
-
-	.data : AT(ADDR(.data) - KERNEL_VMA) {
-		_data = .;
-		*(.data*)
-		*(.gnu.linkonce.d*)
-		. = ALIGN(0x1000);
+ 
+	/* Read-write data (initialized) */
+	.data BLOCK(4K) : ALIGN(4K)
+	{
+		*(.data)
 	}
-
-	.eh_frame : AT(ADDR(.eh_frame) - KERNEL_VMA) {
-		_eh_frame = .;
-		*(.eh_frame)
-		*(.eh_frame_hdr)
-		. = ALIGN(0x1000);
-	}
-
-	_edata = .;
-	
-	.bss : AT(ADDR(.bss) - KERNEL_VMA) {
-		_bss = .;
-		*(.bss*)
-		*(.gnu.linkonce.b*)
+ 
+	/* Read-write data (uninitialized) and stack */
+	.bss BLOCK(4K) : ALIGN(4K)
+	{
 		*(COMMON)
-		. = ALIGN(0x1000);
+		*(.bss)
 	}
-	
-	_end = .;
-
-	/DISCARD/ : {
-		*(.comment)
-		*(note.*)
-	}
+ 
+	/* The compiler may produce other sections, by default it will put them in
+	   a segment with the same name. Simply add stuff here as needed. */
 }

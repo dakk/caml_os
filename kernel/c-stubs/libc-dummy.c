@@ -55,6 +55,10 @@
 
 
 void __stack_chk_fail(void) {}
+void __stack_chk_fail_local(void) {}
+
+long __divdi3 (long a, long b) { return a/b; }
+long __moddi3 (long a, long b) { return a%b; }
 
 int ioctl(int fd, unsigned long request, ...) {
 	return 0;
@@ -317,8 +321,8 @@ void *memset(void *s, int c, size_t n)
   return s;
 }
 
-void *heap = KERNEL_VMA;     //0xffffffff80000000;
-void *heaplimit = KERNEL_VMA + 0x200000; //0xfffffffff0000000;
+void *heap = 0x0FFFFFFF;     //0xffffffff80000000;
+void *heaplimit = 0x10000000 + 0x10000000; //0xfffffffff0000000;
 void *last_seen;
 
 

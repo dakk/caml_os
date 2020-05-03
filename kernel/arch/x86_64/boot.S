@@ -1,142 +1,110 @@
-
-#define ASM
-#include "multiboot.h"
-#include "boot.h"
-
+/* Declare constants for the multiboot header. */
+.set ALIGN,    1<<0             /* align loaded modules on page boundaries */
+.set MEMINFO,  1<<1             /* provide memory map */
+.set FLAGS,    ALIGN | MEMINFO  /* this is the Multiboot 'flag' field */
+.set MAGIC,    0x1BADB002       /* 'magic number' lets bootloader find the header */
+.set CHECKSUM, -(MAGIC + FLAGS) /* checksum of above, to prove we are multiboot */
+ 
 .globl  kmain
-
-.code32
+/* 
+Declare a multiboot header that marks the program as a kernel. These are magic
+values that are documented in the multiboot standard. The bootloader will
+search for this signature in the first 8 KiB of the kernel file, aligned at a
+32-bit boundary. The signature is in its own section so the header can be
+forced to be within the first 8 KiB of the kernel file.
+*/
 .section .multiboot
 .align 4
-multiboot_header:
-	.long MULTIBOOT_HEADER_MAGIC                             /* magic */
-	.long MULTIBOOT_HEADER_FLAGS                             /* flags */
-	.long -(MULTIBOOT_HEADER_MAGIC + MULTIBOOT_HEADER_FLAGS) /* checksum */
-	.long (multiboot_header - KERNEL_VMA)                    /* header_addr */
-	.long (_start - KERNEL_VMA)                              /* load_addr */
-	.long (_edata - KERNEL_VMA)                              /* load_end_addr */
-	.long (_end - KERNEL_VMA)                                /* bss_end_addr */
-	.long (bootstrap - KERNEL_VMA)                           /* entry_addr */
-
-
-.globl bootstrap, init_pml4, init_pdp, init_pd
-bootstrap:
-	/* make sure interrupts are off */
+.long MAGIC
+.long FLAGS
+.long CHECKSUM
+ 
+/*
+The multiboot standard does not define the value of the stack pointer register
+(esp) and it is up to the kernel to provide a stack. This allocates room for a
+small stack by creating a symbol at the bottom of it, then allocating 16384
+bytes for it, and finally creating a symbol at the top. The stack grows
+downwards on x86. The stack is in its own section so it can be marked nobits,
+which means the kernel file is smaller because it does not contain an
+uninitialized stack. The stack on x86 must be 16-byte aligned according to the
+System V ABI standard and de-facto extensions. The compiler will assume the
+stack is properly aligned and failure to align the stack will result in
+undefined behavior.
+*/
+.section .bss
+.align 16
+stack_bottom:
+.skip 16384 # 16 KiB
+stack_top:
+ 
+/*
+The linker script specifies _start as the entry point to the kernel and the
+bootloader will jump to this position once the kernel has been loaded. It
+doesn't make sense to return from this function as the bootloader is gone.
+*/
+.section .text
+.global _start
+.type _start, @function
+_start:
+	/*
+	The bootloader has loaded us into 32-bit protected mode on a x86
+	machine. Interrupts are disabled. Paging is disabled. The processor
+	state is as defined in the multiboot standard. The kernel has full
+	control of the CPU. The kernel can only make use of hardware features
+	and any code it provides as part of itself. There's no printf
+	function, unless the kernel provides its own <stdio.h> header and a
+	printf implementation. There are no security restrictions, no
+	safeguards, no debugging mechanisms, only what the kernel provides
+	itself. It has absolute and complete power over the
+	machine.
+	*/
+ 
+	/*
+	To set up a stack, we set the esp register to point to the top of the
+	stack (as it grows downwards on x86 systems). This is necessarily done
+	in assembly as languages such as C cannot function without a stack.
+	*/
+	mov $stack_top, %esp
+ 
+	/*
+	This is a good place to initialize crucial processor state before the
+	high-level kernel is entered. It's best to minimize the early
+	environment where crucial features are offline. Note that the
+	processor is not fully initialized yet: Features such as floating
+	point instructions and instruction set extensions are not initialized
+	yet. The GDT should be loaded here. Paging should be enabled here.
+	C++ features such as global constructors and exceptions will require
+	runtime support to work as well.
+	*/
+ 
+	/*
+	Enter the high-level kernel. The ABI requires the stack is 16-byte
+	aligned at the time of the call instruction (which afterwards pushes
+	the return pointer of size 4 bytes). The stack was originally 16-byte
+	aligned above and we've pushed a multiple of 16 bytes to the
+	stack since (pushed 0 bytes so far), so the alignment has thus been
+	preserved and the call is well defined.
+	*/
+	call kmain
+ 
+	/*
+	If the system has nothing more to do, put the computer into an
+	infinite loop. To do that:
+	1) Disable interrupts with cli (clear interrupt enable in eflags).
+	   They are already disabled by the bootloader, so this is not needed.
+	   Mind that you might later enable interrupts and return from
+	   kernel_main (which is sort of nonsensical to do).
+	2) Wait for the next interrupt to arrive with hlt (halt instruction).
+	   Since they are disabled, this will lock up the computer.
+	3) Jump to the hlt instruction if it ever wakes up due to a
+	   non-maskable interrupt occurring or due to system management mode.
+	*/
 	cli
-
-	/* load the GDT */
-	lgdt (init_gdt64_ptr - KERNEL_VMA)
-
-	/* give ourselves a functional stack */
-	movl $(init_stack_end - KERNEL_VMA), %esp
-
-	/* reset EFLAGS. */
-	pushl $0
-	popf
-
-	/* store the multiboot info */
-	pushl %eax
-	pushl %ebx
-
-	/* zero out bss section */
-	xorl    %eax, %eax
-	movl    $(_bss - KERNEL_VMA), %edi
-	movl    $(_end - KERNEL_VMA), %ecx
-	subl    %edi, %ecx
-	cld
-	rep	stosb
-
-	/* get the multiboot info back */
-	popl %esi
-	popl %edi
-
-	/* ensure that paging is off */
-	movl    %cr0, %eax
-	andl    $0x7fffffff, %eax
-	movl    %eax, %cr0
-
-	/* enable CR4.PAE */
-	movl    %cr4, %eax
-	orl     $0x20, %eax
-	movl    %eax, %cr4
-
-	/* load a level4 PD */
-	movl    $(init_pml4 - KERNEL_VMA), %eax
-	mov     %eax, %cr3
-
-	/* set IA32_EFER.LME */
-	movl    $0xc0000080, %ecx
-	rdmsr
-
-	/* set the PAE and SYSENTER bits */
-	orl     $0x00000101, %eax
-	wrmsr
-
-	/* enable paging */
-	movl    %cr0, %eax
-	orl     $0x80000000, %eax
-	movl    %eax, %cr0
-
-	/* at this point we should be in IA-32e mode */
-	ljmp $0x08, $(boot64 - KERNEL_VMA)
-
-.data
-.align 16
-gdt64:
-	.quad 0x0000000000000000 // 0x00 NULL
-	.quad 0x0020980000000000 // 0x08 KCODE64
-gdt64_end:
-
-.align 16
-init_gdt64_ptr:
-	.word gdt64_end - gdt64 - 1
-	.long gdt64 - KERNEL_VMA
-
-/* ident map of first 4MB GB, and mirror it at the -2GB mark  */
-.align 0x1000
-init_pml4:
-	.quad init_pdp - KERNEL_VMA + 3 // [0x0000000000000000 - 0x00000007ffffffff)
-	.fill 510,8,0
-	.quad init_pdp - KERNEL_VMA + 3 // [0xfffffff800000000 - 0xffffffffffffffff)
-
-init_pdp:
-	.quad init_pd - KERNEL_VMA + 3
-	.fill 509,8,0
-	.quad init_pd - KERNEL_VMA + 3
-	.fill 1,8,0
-
-init_pd:
-	.quad 0x0000000000000083 // 0MB - 2MB
-	.quad 0x0000000000200083 // 2MB - 4MB
-	.fill 510,8,0
-
-
-init_stack_start:
-	.fill 0x1000,1,0
-init_stack_end:
-
-
-.code64
-boot64_high:
-	/* adjust the stack pointer to be in upper memory */
-	movq $KERNEL_VMA, %rax
-	addq %rax, %rsp
-	
-	/* unmap the kernel from low memory */
-	movq   $0x0,init_pml4
-	invlpg 0
-
-	/* go to our caml entry point */
-	call EXT_C(kmain)
-	// jmp EXT_C(camlKmain__entry)
-
-boot64_hang:
-	hlt
-	jmp boot64_hang
-
-boot64:
-	/* do an indirect to force non-relative jmp */
-	movabsq $boot64_high, %rax
-	jmp *%rax
-
-
+1:	hlt
+	jmp 1b
+ 
+/*
+Set the size of the _start symbol to the current location '.' minus its start.
+This is useful when debugging or when you implement call tracing.
+*/
+.size _start, . - _start

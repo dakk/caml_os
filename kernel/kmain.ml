@@ -3,9 +3,9 @@ external put_char : char -> unit = "put_char" [@@noalloc]
 
 (* let b = ref('c');; *)
 (* let b = ref('C');; *)
-
+(* 
 type zz = { mutable c: char };;
-let z = { c= 'C'; };;
+let z = { c= 'C'; };; *)
 
 let rec kmain () =
   let a = ref('C') in a := 'Z'; 

@@ -9,7 +9,7 @@
 static __u16 x_pos = 0;
 static __u16 y_pos = 0; 
 static __u16 attr = 0x1000 | 0x0e00;
-__u16 *vidmem = (__u16 *) (KERNEL_VMA + 0x000b8000);
+__u16 *vidmem = (__u16 *) (0xB8000);
 
 
 void put_char(value c) {
