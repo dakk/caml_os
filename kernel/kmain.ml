@@ -1,7 +1,7 @@
 external clear_screen : unit -> unit = "clear_screen" [@@noalloc]
 external put_char : char -> unit = "put_char" [@@noalloc]
 
-(* let b = ref('c');; *)
+let b = ref('c');;
 (* let b = ref('C');; *)
 (* 
 type zz = { mutable c: char };;
@@ -15,9 +15,9 @@ let rec kmain () =
   (* clear_screen (); *)
   (* Mem.alloc 1; *)
   (* String.iter put_char "Hello"; *)
-  put_char !a;
-  a:='C';
-  put_char !a;
+  put_char !b;
+  b:='C';
+  put_char !b;
   (* String.iter (fun x -> put_char x) !b; *)
   (* Vid.putc !a; *)
   (* Vid.puts "Hello"; *)
