@@ -1,60 +1,12 @@
 #include <types.h>
 #include "libc-dummy.h"
 
-// char *heap;
-
-// char* malloc (size_t size) {
-// 	// char *res = heap;
-// 	// heap = heap + size;
-// 	// return res;
-// }
-
-
-// void *realloc(void *ptr, size_t size) {
-// 	// return malloc(size);
-// }
-
-// void free (char *m) { }
-
-// void *memcpy(char *a , const char *b, size_t dim) {
-// 	// __u32 x = 0;
-	
-// 	// while(x < dim) {
-// 	// 	*a = *b;
-// 	// 	a++; 
-// 	// 	b++;
-// 	// 	x++;
-// 	// }
-// 	// return (void *) a;
-// }
-
-// void *memset(void *s, int c, size_t n) {
-// 	// char *a = s;
-// 	// size_t i;
-	
-// 	// for (i = 0; i < n; i++, a++)
-// 	// 	*a = c;
-	
-// 	// return s;
-// }
-
-// void *memmove(char *a, char *b, size_t dim) {
-// 	// size_t i;
-// 	// for(i = 0; i < dim; i++) {
-// 	// 	*b = *a;
-// 	// 	a++;
-// 	// 	b++;
-// 	// }
-// 	// return (void *) a;
-// }
-
-
-// int memcmp(const void *a, const void *b, size_t dim) {
-// 	return 0;
-// }
-
 
 void __stack_chk_fail(void) {}
+void __stack_chk_fail_local(void) {}
+
+long __divdi3 (long a, long b) { return a/b; }
+long __moddi3 (long a, long b) { return a%b; }
 
 int ioctl(int fd, unsigned long request, ...) {
 	return 0;
@@ -76,90 +28,11 @@ double round(double x){ return 0.0; }
 long double strtod_l(const char *nptr, char **endptr, /*locale_t*/ int locale) { return 0.0; }
 int vfprintf(FILE *restrict stream, const char *restrict format, va_list ap) { return 0; }
 int vsnprintf(char *str, size_t size, const char *format, va_list ap) { return 0; }
-// void floor() {}
-// void ceil() {}
-// void strcmp () {}
-// void strlen () {}
-// void __isoc99_sscanf () {}
-// void fputs () {}
-// void fprintf () {}
-// void fwrite () {}
-// void snprintf () {}
-// void fputc () {}
-// void fmin () {}
-// void log1p() {}
-// void closedir() {}
-// void close() {}
-// void atan() {}
-// void atan2() {}
-// void tan() {}
-// void sin() {}
-// void lseek64() {}
-// void expm1() {}
-// void hypot() {}
-// void readdir64() {}
-// void nextafter () {}
-// void round () {}
-// void sigaltstack() {}
-// void unlink() {}
-// void exit () {}
-// void mmap64() {}
-// void munmap() {}
-// void vfprintf() {}
-// void fflush () {}
-// void abort() {}
-// void sigemptyset() {}
-// void sigaction () {}
-// void sigaddset() {}
-// void sigismember() {}
-// void sigdelset() {}
-// void sigprocmask() {}
-// void __sigsetjmp() {}
-// void open64() {}
-// void __xstat64() {}
-// void log10() {}
-// void readlink() {}
+
 void uselocale() {}
-// void exp() {}
-// void ldexp() {}
-// void fma() {}
-// void acos () {}
-// void asin(){}
-// void tanh() {}
-// void cosh() {}
-// void cos() {}
-// void sinh() {}
-// void modf() {}
-// void log() {}
 int isatty(int fd) { return 0; }
-// void read() {}
-// void write() {}
-// void getenv() {}
-// void opendir() {}
-// void ioctl() {}
 void newlocale() {}
 void freelocale() {}
-// void fmod() {}
-// void frexp() {}
-// void strtol() {}
-// void strtod_l() {}
-// void dlerror() {}
-// void getpid() {}
-// void getppid() {}
-// void system() {}
-// void gettimeofday() {}
-// void getcwd() {}
-// void chdir() {}
-// void rename() {}
-// void vsnprintf() {}
-
-
-
-
-
-
-
-
 
 
 
@@ -254,17 +127,11 @@ pid_t getpid(void)
 
 pid_t getppid(void)
 {
-#ifdef DEBUG
-  c_printf("getppid called\n");
-#endif
   return 1;
 }
 
 int system(const char *command)
 {
-#ifdef DEBUG
-  c_printf("system(%s) called\n",command);
-#endif
   return notImpl_int();
 }
 
@@ -317,9 +184,12 @@ void *memset(void *s, int c, size_t n)
   return s;
 }
 
-void *heap = KERNEL_VMA;     //0xffffffff80000000;
-void *heaplimit = KERNEL_VMA + 0x200000; //0xfffffffff0000000;
+
+
+void *heap;
+void *heaplimit;
 void *last_seen;
+// #define MALLOC
 
 
 /* 
@@ -337,111 +207,6 @@ void *last_seen;
  *  We also reserve the first emplacement for a pointer to the first free place.
  *  We use next fit.
  */
-
-void* last_seen;
-
-// #ifdef MALLOC
-// void *malloc(size_t size)
-// {
-//   int s = sizeof(void*);
-  
-//  /* Number of used pages */
-//   int pSize = (size >> PageShift) + 1;
-//   /* Rounded size */
-//   int rSize = pSize << PageShift;
-// #ifdef DEBUG
-//   c_printf("malloc called (%u - %u)\n",size, rSize);
-// #endif
-//   void *cur, *new, *prv, *nxt;
-//   int b;
-//   for (cur = last_seen, b = 0; 
-//        cur != last_seen || !b; 
-//        b = 1,cur = (*(void**) (cur - 2*s) == NULL) ?
-// 	      *(void**) (cur - 2*s) : 
-// 	      *(void**) (heap + HEAP_OFFSET))
-//   {
-//     if (*(int*)(cur-s) >= rSize + s)
-//     {
-//       /* We've found the place */
-//       new = cur + rSize;
-//       prv = *(void**) (cur - 3*s);
-//       nxt = *(void**) (cur - 2*s);
-//       if (prv)
-// 	*(void**) (prv - 2*s) = new;
-//       if (nxt)
-// 	*(void**) (nxt - 3*s) = new;
-//       *(void**) (new - 3*s) = prv;
-//       *(void**) (new - 2*s) = nxt;
-//       *(int*)   (new - s)   = *(int*) (cur - s) - rSize;
-//       last_seen = nxt;
-//       if (cur == *(void**)(heap + HEAP_OFFSET))
-// 	*(void**)(heap + HEAP_OFFSET) = new;
-//       *(int*)(cur - 3*s) = rSize;
-// #ifdef DEBUG
-//     c_printf ("new: %p (prev: %p, next: %p, size: %d)\n", new, *(void**)(new-3*s), *(void**)(new-2*s), *(int*)(new-s));
-// #endif
-//       return (cur-2*s);
-//     }
-//   }
-// #ifdef DEBUG
-//   c_printf ("Same Player, shoot again\n");
-// #endif
-//   /* If qemu segfaults, we see nothing */
-//   while (1);
-//   return NULL;
-// }
-
-// void free (void* ptr)
-// {
-//   int s = sizeof(void*);
-//   int size = *(int*) (ptr - s);
-//   void *cur, *prv, *nxt, *sup_nxt;
-// /*#ifdef DEBUG*/
-//   c_printf ("calling free %p\n", ptr);
-// /*#endif*/
-//   if (!ptr)
-//     return;
-//   /* find out if we should merge two empty spaces */
-//   for (cur = *(void**) (heap + HEAP_OFFSET); *(void**)(cur - 2*s) < ptr; cur = *(void**)(cur - 2*s))
-//     if (cur + *(int*) (cur - s) + s == ptr)
-//     {
-//       if (ptr + size + 3*s == *(void**) (cur - 2*s))
-//       {
-// 	nxt     = *(void**) (cur - 2*s);
-// 	sup_nxt = *(void**) (nxt - 2*s);
-// 	*(int*)   (cur - s)      += size + *(int*) (nxt - s) + size + 4*s;
-// 	*(void**) (cur - 2*s)     = sup_nxt;
-// 	*(void**) (sup_nxt - 3*s) = cur;
-// 	c_printf ("free: merged three of them\n");
-//       } else
-//       {
-// 	*(int*) (cur - s) += size + s;
-// 	c_printf ("free: merged with before\n");
-//       }
-//       return;
-//     } else {
-//       if (ptr + size + 3*s == *(void**) (cur - 2*s))
-//       {
-// 	nxt     = *(void**) (cur - 2*s);
-// 	sup_nxt = *(void**) (nxt - 2*s); 
-// 	*(void**) (ptr - s)   = cur;
-// 	*(void**)  ptr        = *(void**) (nxt - 2*s);
-// 	*(int*)   (ptr + s)   = size + 4*s + *(int*) (nxt - s);
-// 	*(void**) (cur - 2*s) = ptr + 2*s;
-// 	*(void**) (nxt - 3*s) = ptr + 2*s;
-// 	c_printf ("free: merged with after\n");
-// 	return;
-//       }
-//     }
-//   prv = *(void**) (cur - 3*s);
-//   *(void**) (ptr - s)   = prv;
-//   *(void**)  ptr        = cur;
-//   *(int*)   (ptr + s)   = size;
-//   *(void**) (prv - 2*s) = ptr + 2*s;
-//   *(void**) (cur - 3*s) = ptr + 2*s;
-//   c_printf ("free: no merges\n");
-// }
-// #endif
 
 #ifndef MALLOC
 void* malloc(size_t size)
@@ -465,6 +230,110 @@ void free(void *ptr)
 }
 
 #endif
+
+#ifdef MALLOC
+void *malloc(size_t size)
+{
+  int s = sizeof(void*);
+  
+ /* Number of used pages */
+  int pSize = (size >> PageShift) + 1;
+  /* Rounded size */
+  int rSize = pSize << PageShift;
+#ifdef DEBUG
+  c_printf("malloc called (%u - %u)\n",size, rSize);
+#endif
+  void *cur, *new, *prv, *nxt;
+  int b;
+  for (cur = last_seen, b = 0; 
+       cur != last_seen || !b; 
+       b = 1,cur = (*(void**) (cur - 2*s) == NULL) ?
+	      *(void**) (cur - 2*s) : 
+	      *(void**) (heap + HEAP_OFFSET))
+  {
+    if (*(int*)(cur-s) >= rSize + s)
+    {
+      /* We've found the place */
+      new = cur + rSize;
+      prv = *(void**) (cur - 3*s);
+      nxt = *(void**) (cur - 2*s);
+      if (prv)
+	*(void**) (prv - 2*s) = new;
+      if (nxt)
+	*(void**) (nxt - 3*s) = new;
+      *(void**) (new - 3*s) = prv;
+      *(void**) (new - 2*s) = nxt;
+      *(int*)   (new - s)   = *(int*) (cur - s) - rSize;
+      last_seen = nxt;
+      if (cur == *(void**)(heap + HEAP_OFFSET))
+	*(void**)(heap + HEAP_OFFSET) = new;
+      *(int*)(cur - 3*s) = rSize;
+#ifdef DEBUG
+    c_printf ("new: %p (prev: %p, next: %p, size: %d)\n", new, *(void**)(new-3*s), *(void**)(new-2*s), *(int*)(new-s));
+#endif
+      return (cur-2*s);
+    }
+  }
+#ifdef DEBUG
+  c_printf ("Same Player, shoot again\n");
+#endif
+  /* If qemu segfaults, we see nothing */
+  while (1);
+  return NULL;
+}
+
+void free (void* ptr)
+{
+  int s = sizeof(void*);
+  int size = *(int*) (ptr - s);
+  void *cur, *prv, *nxt, *sup_nxt;
+/*#ifdef DEBUG*/
+  c_printf ("calling free %p\n", ptr);
+/*#endif*/
+  if (!ptr)
+    return;
+  /* find out if we should merge two empty spaces */
+  for (cur = *(void**) (heap + HEAP_OFFSET); *(void**)(cur - 2*s) < ptr; cur = *(void**)(cur - 2*s))
+    if (cur + *(int*) (cur - s) + s == ptr)
+    {
+      if (ptr + size + 3*s == *(void**) (cur - 2*s))
+      {
+	nxt     = *(void**) (cur - 2*s);
+	sup_nxt = *(void**) (nxt - 2*s);
+	*(int*)   (cur - s)      += size + *(int*) (nxt - s) + size + 4*s;
+	*(void**) (cur - 2*s)     = sup_nxt;
+	*(void**) (sup_nxt - 3*s) = cur;
+	c_printf ("free: merged three of them\n");
+      } else
+      {
+	*(int*) (cur - s) += size + s;
+	c_printf ("free: merged with before\n");
+      }
+      return;
+    } else {
+      if (ptr + size + 3*s == *(void**) (cur - 2*s))
+      {
+	nxt     = *(void**) (cur - 2*s);
+	sup_nxt = *(void**) (nxt - 2*s); 
+	*(void**) (ptr - s)   = cur;
+	*(void**)  ptr        = *(void**) (nxt - 2*s);
+	*(int*)   (ptr + s)   = size + 4*s + *(int*) (nxt - s);
+	*(void**) (cur - 2*s) = ptr + 2*s;
+	*(void**) (nxt - 3*s) = ptr + 2*s;
+	c_printf ("free: merged with after\n");
+	return;
+      }
+    }
+  prv = *(void**) (cur - 3*s);
+  *(void**) (ptr - s)   = prv;
+  *(void**)  ptr        = cur;
+  *(int*)   (ptr + s)   = size;
+  *(void**) (prv - 2*s) = ptr + 2*s;
+  *(void**) (cur - 3*s) = ptr + 2*s;
+  c_printf ("free: no merges\n");
+}
+#endif
+
 
 
 void* malloc_frame_aligned(size_t size)
