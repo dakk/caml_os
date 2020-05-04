@@ -1,5 +1,5 @@
 #include "cmem.h"
-#include <caml/memory.h>
+#include "caml/memory.h"
 #include "libc-dummy.h"
 
 CAMLprim value _mem_get(value addr)

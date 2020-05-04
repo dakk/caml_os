@@ -28,90 +28,11 @@ double round(double x){ return 0.0; }
 long double strtod_l(const char *nptr, char **endptr, /*locale_t*/ int locale) { return 0.0; }
 int vfprintf(FILE *restrict stream, const char *restrict format, va_list ap) { return 0; }
 int vsnprintf(char *str, size_t size, const char *format, va_list ap) { return 0; }
-// void floor() {}
-// void ceil() {}
-// void strcmp () {}
-// void strlen () {}
-// void __isoc99_sscanf () {}
-// void fputs () {}
-// void fprintf () {}
-// void fwrite () {}
-// void snprintf () {}
-// void fputc () {}
-// void fmin () {}
-// void log1p() {}
-// void closedir() {}
-// void close() {}
-// void atan() {}
-// void atan2() {}
-// void tan() {}
-// void sin() {}
-// void lseek64() {}
-// void expm1() {}
-// void hypot() {}
-// void readdir64() {}
-// void nextafter () {}
-// void round () {}
-// void sigaltstack() {}
-// void unlink() {}
-// void exit () {}
-// void mmap64() {}
-// void munmap() {}
-// void vfprintf() {}
-// void fflush () {}
-// void abort() {}
-// void sigemptyset() {}
-// void sigaction () {}
-// void sigaddset() {}
-// void sigismember() {}
-// void sigdelset() {}
-// void sigprocmask() {}
-// void __sigsetjmp() {}
-// void open64() {}
-// void __xstat64() {}
-// void log10() {}
-// void readlink() {}
+
 void uselocale() {}
-// void exp() {}
-// void ldexp() {}
-// void fma() {}
-// void acos () {}
-// void asin(){}
-// void tanh() {}
-// void cosh() {}
-// void cos() {}
-// void sinh() {}
-// void modf() {}
-// void log() {}
 int isatty(int fd) { return 0; }
-// void read() {}
-// void write() {}
-// void getenv() {}
-// void opendir() {}
-// void ioctl() {}
 void newlocale() {}
 void freelocale() {}
-// void fmod() {}
-// void frexp() {}
-// void strtol() {}
-// void strtod_l() {}
-// void dlerror() {}
-// void getpid() {}
-// void getppid() {}
-// void system() {}
-// void gettimeofday() {}
-// void getcwd() {}
-// void chdir() {}
-// void rename() {}
-// void vsnprintf() {}
-
-
-
-
-
-
-
-
 
 
 
@@ -218,6 +139,9 @@ int system(const char *command)
 
 void *memcpy(void *dest, const void *src, size_t n)
 {
+#ifdef DEBUG
+/*  c_printf("memcpy(%p,%p,%u) called\n",dest,src,n);*/
+#endif
   int i;
   char *cdest = dest;
   const char *csrc = src;
@@ -229,6 +153,9 @@ void *memcpy(void *dest, const void *src, size_t n)
 
 void *memmove(void *dest, const void *src, size_t n)
 {
+#ifdef DEBUG
+/*  c_printf("memmove(%p,%p,%u) called\n",dest,src,n);*/
+#endif
   if((dest > src) && (dest < (src + n)))
   {
     int i;
@@ -245,6 +172,9 @@ void *memmove(void *dest, const void *src, size_t n)
 
 void *memset(void *s, int c, size_t n)
 {
+#ifdef DEBUG
+  /*c_printf("memset(%p,%i,%u) called\n",s,c,n);*/
+#endif
   int i;
   char *cs = s;
   
@@ -254,9 +184,12 @@ void *memset(void *s, int c, size_t n)
   return s;
 }
 
-void *heap;     
+
+
+void *heap;
 void *heaplimit;
 void *last_seen;
+// #define MALLOC
 
 
 /* 
@@ -275,7 +208,29 @@ void *last_seen;
  *  We use next fit.
  */
 
-#define MALLOC 
+#ifndef MALLOC
+void* malloc(size_t size)
+{
+#ifdef DEBUG
+  c_printf ("heap: %p, heaplimit: %p\n", heap, heaplimit);
+#endif
+  void *ans = heap;
+//   if (heap+size>heaplimit)
+//     return NULL;
+  heap += size;
+  return ans;
+}
+
+
+void free(void *ptr)
+{
+#ifdef DEBUG
+  c_printf("free(%p) called\n",ptr);
+#endif
+}
+
+#endif
+
 #ifdef MALLOC
 void *malloc(size_t size)
 {
@@ -379,28 +334,6 @@ void free (void* ptr)
 }
 #endif
 
-#ifndef MALLOC
-void* malloc(size_t size)
-{
-#ifdef DEBUG
-  c_printf ("heap: %p, heaplimit: %p\n", heap, heaplimit);
-#endif
-  void *ans = heap;
-  if (heap+size>heaplimit)
-    return NULL;
-  heap += size;
-  return ans;
-}
-
-
-void free(void *ptr)
-{
-#ifdef DEBUG
-  c_printf("free(%p) called\n",ptr);
-#endif
-}
-
-#endif
 
 
 void* malloc_frame_aligned(size_t size)
