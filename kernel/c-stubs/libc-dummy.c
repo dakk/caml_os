@@ -215,8 +215,8 @@ void* malloc(size_t size)
   c_printf ("heap: %p, heaplimit: %p\n", heap, heaplimit);
 #endif
   void *ans = heap;
-//   if (heap+size>heaplimit)
-//     return NULL;
+  if (heap+size>heaplimit)
+    return NULL;
   heap += size;
   return ans;
 }

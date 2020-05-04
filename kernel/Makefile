@@ -20,8 +20,8 @@ OBJS	 = $(MAIN_RUN_OBJS) $(ARCH_RUN_OBJS) $(MK_OBJS)
 LIBOCAML	= build/libml.a
 CAMLLIB		= /home/dakk/.opam/4.09.1+32bit/lib/ocaml/
 OCAMLKERNEL	= build/mlkernel.o
-MLI=mem.mli $(wildcard drivers/*.mli) ktask.mli orchestrator.mli
-ML=mem.ml $(wildcard drivers/*.ml) ktask.ml orchestrator.ml kmain.ml 
+MLI=mem.mli $(wildcard drivers/*.mli) orc.mli
+ML=mem.ml $(wildcard drivers/*.ml) orc.ml kmain.ml 
 CMX	 = $(ML:.ml=.cmx)
 CMI = $(MLI:.mli=.cmi) 
 CMXA =

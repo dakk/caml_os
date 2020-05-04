@@ -8,6 +8,7 @@ let _VCOL = 80;;
 let _VLINE = 25;;
 let _VMEM = 0xB8000;;
 
+(* let name = "Vid";; *)
 
 let init () = {
   x= 0;
