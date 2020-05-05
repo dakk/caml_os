@@ -1,22 +1,34 @@
 #include <types.h>
 #include "libc-dummy.h"
 
+#define DEBUG
 
-void __stack_chk_fail(void) {}
-void __stack_chk_fail_local(void) {}
+extern void write_string(char *, ...);
+
+
+void __stack_chk_fail(void) {
+	write_string("stack fail");
+}
+void __stack_chk_fail_local(void) {
+	write_string("stack fail local");
+}
 
 long __divdi3 (long a, long b) { return a/b; }
 long __moddi3 (long a, long b) { return a%b; }
 
 int ioctl(int fd, unsigned long request, ...) {
+	write_string("ioctl");
 	return 0;
 }
 
 double fma(double x, double y, double z) { return x; }
-int memcmp(const void *s1, const void *s2, size_t n) { return 0; }
-int munmap(void *addr, size_t len) { return 0; }
+int memcmp(const void *s1, const void *s2, size_t n) { 
+	write_string("memcmp");return 0; }
+int munmap(void *addr, size_t len) { 
+	write_string("munmap");return 0; }
 void *mmap64(void *addr, size_t length, int prot, int flags,
-                  int fd, off_t offset) { return NULL; }
+                  int fd, off_t offset) { 
+	write_string("mmap64");return NULL; }
 int sigismember(const void *set, int signo) { return 0; }
 void abort(void) {}
 double fmin(double x, double y) { return 0.0; }
@@ -38,7 +50,6 @@ void freelocale() {}
 
 
 
-int c_printf(const char*, ...);
 
 int errno = 0;
 
@@ -63,7 +74,7 @@ static void __attribute__((__noreturn__)) notImpl_fp(void)
 {
   __asm__ __volatile__("int $6");
 #ifdef DEBUG
-  c_printf("FP operation\n");
+  write_string("FP operation\n");
 #endif
 //   hang();
 }
@@ -71,7 +82,7 @@ static void __attribute__((__noreturn__)) notImpl_fp(void)
 long __sysconf(int name)
 {
 #ifdef DEBUG
-  c_printf("__sysconf(%i) called\n",name);
+  write_string("__sysconf(%i) called\n",name);
 #endif
   return notImpl_int();
 }
@@ -79,7 +90,7 @@ long __sysconf(int name)
 char *getenv(const char *name)
 {
 #ifdef DEBUG
-  c_printf("getenv(%s) called\n",name);
+  write_string("getenv(%s) called\n",name);
 #endif
   return notImpl_ptr();
 }
@@ -92,7 +103,7 @@ char *secure_getenv(const char *name) {
 int setenv(const char *name, const char *value, int overwrite)
 {
 #ifdef DEBUG
-  c_printf("setenv called(%s,%s,%i)\n",name,value,overwrite);
+  write_string("setenv called(%s,%s,%i)\n",name,value,overwrite);
 #endif
   return notImpl_int();
 }
@@ -100,7 +111,7 @@ int setenv(const char *name, const char *value, int overwrite)
 char *setlocale(int category, const char *locale)
 {
 #ifdef DEBUG
-  c_printf("setlocale called(%i,%s)\n",category,locale);
+  write_string("setlocale called(%i,%s)\n",category,locale);
 #endif
   return notImpl_ptr();
 }
@@ -110,7 +121,7 @@ char *setlocale(int category, const char *locale)
 void exit(int status)
 {
 #ifdef DEBUG
-  c_printf("exit called(%i)\n",status);
+  write_string("exit called(%i)\n",status);
 #endif
 //   hang();
 }
@@ -120,7 +131,7 @@ void exit(int status)
 pid_t getpid(void)
 {
 #ifdef DEBUG
-  c_printf("getpid called\n");
+  write_string("getpid called\n");
 #endif
   return 1;
 }
@@ -140,7 +151,7 @@ int system(const char *command)
 void *memcpy(void *dest, const void *src, size_t n)
 {
 #ifdef DEBUG
-/*  c_printf("memcpy(%p,%p,%u) called\n",dest,src,n);*/
+  write_string("memcpy(%p,%p,%u) called\n",dest,src,n);
 #endif
   int i;
   char *cdest = dest;
@@ -148,13 +159,14 @@ void *memcpy(void *dest, const void *src, size_t n)
   
   for (i = 0; i < n; i++)
     cdest[i] = csrc[i];
+  write_string("memcpy(%p,%p,%u) done\n",dest,src,n);
   return dest;
 }
 
 void *memmove(void *dest, const void *src, size_t n)
 {
 #ifdef DEBUG
-/*  c_printf("memmove(%p,%p,%u) called\n",dest,src,n);*/
+  write_string("memmove(%p,%p,%u) called\n",dest,src,n);
 #endif
   if((dest > src) && (dest < (src + n)))
   {
@@ -173,7 +185,7 @@ void *memmove(void *dest, const void *src, size_t n)
 void *memset(void *s, int c, size_t n)
 {
 #ifdef DEBUG
-  /*c_printf("memset(%p,%i,%u) called\n",s,c,n);*/
+  write_string("memset(%p,%i,%u) called\n",s,c,n);
 #endif
   int i;
   char *cs = s;
@@ -181,6 +193,7 @@ void *memset(void *s, int c, size_t n)
   for(i = 0; i < n; i++)
     cs[i] = c;
 
+  write_string("memset(%p,%i,%u) done\n",s,c,n);
   return s;
 }
 
@@ -212,7 +225,7 @@ void *last_seen;
 void* malloc(size_t size)
 {
 #ifdef DEBUG
-  c_printf ("heap: %p, heaplimit: %p\n", heap, heaplimit);
+  write_string ("heap: %p, heaplimit: %p\n", heap, heaplimit);
 #endif
   void *ans = heap;
   if (heap+size>heaplimit)
@@ -225,7 +238,7 @@ void* malloc(size_t size)
 void free(void *ptr)
 {
 #ifdef DEBUG
-  c_printf("free(%p) called\n",ptr);
+  write_string("free(%p) called\n",ptr);
 #endif
 }
 
@@ -241,7 +254,7 @@ void *malloc(size_t size)
   /* Rounded size */
   int rSize = pSize << PageShift;
 #ifdef DEBUG
-  c_printf("malloc called (%u - %u)\n",size, rSize);
+  write_string("malloc called (%u - %u)\n",size, rSize);
 #endif
   void *cur, *new, *prv, *nxt;
   int b;
@@ -269,13 +282,13 @@ void *malloc(size_t size)
 	*(void**)(heap + HEAP_OFFSET) = new;
       *(int*)(cur - 3*s) = rSize;
 #ifdef DEBUG
-    c_printf ("new: %p (prev: %p, next: %p, size: %d)\n", new, *(void**)(new-3*s), *(void**)(new-2*s), *(int*)(new-s));
+    write_string ("new: %p (prev: %p, next: %p, size: %d)\n", new, *(void**)(new-3*s), *(void**)(new-2*s), *(int*)(new-s));
 #endif
       return (cur-2*s);
     }
   }
 #ifdef DEBUG
-  c_printf ("Same Player, shoot again\n");
+  write_string ("Same Player, shoot again\n");
 #endif
   /* If qemu segfaults, we see nothing */
   while (1);
@@ -288,7 +301,7 @@ void free (void* ptr)
   int size = *(int*) (ptr - s);
   void *cur, *prv, *nxt, *sup_nxt;
 /*#ifdef DEBUG*/
-  c_printf ("calling free %p\n", ptr);
+  write_string ("calling free %p\n", ptr);
 /*#endif*/
   if (!ptr)
     return;
@@ -303,11 +316,11 @@ void free (void* ptr)
 	*(int*)   (cur - s)      += size + *(int*) (nxt - s) + size + 4*s;
 	*(void**) (cur - 2*s)     = sup_nxt;
 	*(void**) (sup_nxt - 3*s) = cur;
-	c_printf ("free: merged three of them\n");
+	write_string ("free: merged three of them\n");
       } else
       {
 	*(int*) (cur - s) += size + s;
-	c_printf ("free: merged with before\n");
+	write_string ("free: merged with before\n");
       }
       return;
     } else {
@@ -320,7 +333,7 @@ void free (void* ptr)
 	*(int*)   (ptr + s)   = size + 4*s + *(int*) (nxt - s);
 	*(void**) (cur - 2*s) = ptr + 2*s;
 	*(void**) (nxt - 3*s) = ptr + 2*s;
-	c_printf ("free: merged with after\n");
+	write_string ("free: merged with after\n");
 	return;
       }
     }
@@ -330,7 +343,7 @@ void free (void* ptr)
   *(int*)   (ptr + s)   = size;
   *(void**) (prv - 2*s) = ptr + 2*s;
   *(void**) (cur - 3*s) = ptr + 2*s;
-  c_printf ("free: no merges\n");
+  write_string ("free: no merges\n");
 }
 #endif
 
@@ -351,7 +364,7 @@ void* malloc_frame_aligned(size_t size)
 void *realloc(void *ptr, size_t size)
 {
 #ifdef DEBUG
-  c_printf("realloc(%p,%u) called\n",ptr,size);
+  write_string("realloc(%p,%u) called\n",ptr,size);
 #endif
   void *ans = NULL;
   if (size) {
@@ -368,7 +381,7 @@ void *realloc(void *ptr, size_t size)
 void *calloc(size_t nb, size_t size)
 {
 #ifdef DEBUG
-  c_printf("calloc(%u,%u) called\n",nb,size);
+  write_string("calloc(%u,%u) called\n",nb,size);
 #endif
   size_t totsize = nb * size;
   void *ptr;
@@ -388,7 +401,7 @@ void *calloc(size_t nb, size_t size)
 int sigemptyset(sigset_t *set)
 {
 #ifdef DEBUG
-  c_printf("sigemptyset(%p) called\n",set);
+  write_string("sigemptyset(%p) called\n",set);
 #endif
   return notImpl_int();
 }
@@ -396,7 +409,7 @@ int sigemptyset(sigset_t *set)
 int sigaddset(sigset_t *set, int signum)
 {
 #ifdef DEBUG
-  c_printf("sigdaddset(%p,%i) called\n",set,signum);
+  write_string("sigdaddset(%p,%i) called\n",set,signum);
 #endif
   return notImpl_int();
 }
@@ -404,7 +417,7 @@ int sigaddset(sigset_t *set, int signum)
 int sigdelset(sigset_t *set, int signum)
 {
 #ifdef DEBUG
-  c_printf("sigdelset(%p,%i) called\n",set,signum);
+  write_string("sigdelset(%p,%i) called\n",set,signum);
 #endif
   return notImpl_int();
 }
@@ -423,7 +436,7 @@ struct sigaction
 int sigaction(int signum,const struct sigaction *act,struct sigaction *oldact)
 {
 #ifdef DEBUG
-  c_printf("sigaction(%i,%p,%p) called\n",signum,act,oldact);
+  write_string("sigaction(%i,%p,%p) called\n",signum,act,oldact);
 #endif
   return notImpl_int();
 }
@@ -431,7 +444,7 @@ int sigaction(int signum,const struct sigaction *act,struct sigaction *oldact)
 int sigprocmask(int how, const sigset_t *set, sigset_t *oldset)
 {
 #ifdef DEBUG
-  c_printf("sigprocmask(%i,%p,%p) called\n",how,set,oldset);
+  write_string("sigprocmask(%i,%p,%p) called\n",how,set,oldset);
 #endif
   return notImpl_int();
 }
@@ -448,7 +461,7 @@ static stack_t sigstack;
 int sigaltstack(const stack_t *ss, stack_t *oss)
 {
 #ifdef DEBUG
-  c_printf("sigaltstack(%p,%p) called\n",ss,oss);
+  write_string("sigaltstack(%p,%p) called\n",ss,oss);
 #endif
   if (oss)
     memcpy(oss,&sigstack,sizeof(*oss));
@@ -461,7 +474,7 @@ int sigaltstack(const stack_t *ss, stack_t *oss)
 int __sigsetjmp(sigjmp_buf env, int savesigs)
 {
 #ifdef DEBUG
-  c_printf("__sigsetjmp(%i) called\n",savesigs);
+  write_string("__sigsetjmp(%i) called\n",savesigs);
 #endif
   memset(&env,0,sizeof(env));
   return 0;
@@ -476,14 +489,14 @@ FILE *stderr=(FILE *)(&stdin+2);
 int sscanf(const char *str, const char *format, ...)
 {
 #ifdef DEBUG
-  c_printf("sscanf(%s,%s) called\n",str,format);
+  write_string("sscanf(%s,%s) called\n",str,format);
 #endif
   return notImpl_int();
 }
 int __isoc99_sscanf(const char *str, const char *format, ...)
 {
 #ifdef DEBUG
-  c_printf("__isoc99_sscanf(%s,%s) called\n",str,format);
+  write_string("__isoc99_sscanf(%s,%s) called\n",str,format);
 #endif
   return notImpl_int();
 }
@@ -504,17 +517,6 @@ int printf(const char *fmt, ...)
   return i;
 }
 
-int c_printf(const char *fmt, ...)
-{
-  va_list args;
-  int i;
-  /* !! not reentrant !! */
-  va_start(args,fmt);
-  i = vsnprintf(buf,sizeof(buf),fmt,args);
-  va_end(args);
-//   c_print_string(buf);
-  return i;
-}
 
 int snprintf(char *buf, size_t size, const char *fmt, ...)
 {
@@ -536,7 +538,7 @@ int puts(const char *s)
 int fprintf(FILE *stream, const char *format, ...)
 {
 #ifdef DEBUG
-  c_printf("fprintf(%p,%s) called\n",stream,format);
+  write_string("fprintf(%p,%s) called\n",stream,format);
 #endif
   if (stream != stdin && stream != stdout && stream != stderr)
     return notImpl_int();
@@ -554,7 +556,7 @@ int fprintf(FILE *stream, const char *format, ...)
 int sprintf(char *str, const char *format, ...)
 {
 #ifdef DEBUG
-  c_printf("sprintf(%p,%s) called\n",str,format);
+  write_string("sprintf(%p,%s) called\n",str,format);
 #endif
   va_list args;
   int i;
@@ -569,7 +571,7 @@ int sprintf(char *str, const char *format, ...)
 int open(const char *pathname, int flags, ...)
 {
 #ifdef DEBUG
-  c_printf("open(%s,%i) called\n",pathname,flags);
+  write_string("open(%s,%i) called\n",pathname,flags);
 #endif
   return notImpl_int();
 }
@@ -577,7 +579,7 @@ int open(const char *pathname, int flags, ...)
 int close(int fd)
 {
 #ifdef DEBUG
-  c_printf("close(%i) called\n",fd);
+  write_string("close(%i) called\n",fd);
 #endif
   return notImpl_int();
 }
@@ -586,7 +588,7 @@ ssize_t read(int fd, void *buf, size_t count)
 {
   int c;
 #ifdef DEBUG
-  /*c_printf("read(%i,%p,%u) called\n",fd,buf,count);*/
+  /*write_string("read(%i,%p,%u) called\n",fd,buf,count);*/
 #endif
   if (!count) return 0;
   if (fd != 0 && fd != 1 && fd != 2)
@@ -600,7 +602,7 @@ ssize_t read(int fd, void *buf, size_t count)
 ssize_t write(int fd, const void *buf, size_t count)
 {
 #ifdef DEBUG
-  /*c_printf("write(%i,%p,%u) called\n",fd,buf,count);*/
+  /*write_string("write(%i,%p,%u) called\n",fd,buf,count);*/
 #endif
   size_t remain = count;
   const unsigned char *cbuf = buf;
@@ -614,7 +616,7 @@ ssize_t write(int fd, const void *buf, size_t count)
 int fcntl(int fd, int cmd)
 {
 #ifdef DEBUG
-  c_printf("fcntl(%i,%i) called\n",fd,cmd);
+  write_string("fcntl(%i,%i) called\n",fd,cmd);
 #endif
   return notImpl_int();
 }
@@ -624,7 +626,7 @@ int fcntl(int fd, int cmd)
 off64_t lseek64(int fd, off64_t offset, int whence)
 {
 #ifdef DEBUG
-  c_printf("lseek64(%i,%li,%i) called\n",fd,offset,whence);
+  write_string("lseek64(%i,%li,%i) called\n",fd,offset,whence);
 #endif
   return notImpl_int();
 }
@@ -632,7 +634,7 @@ off64_t lseek64(int fd, off64_t offset, int whence)
 int open64(const char *__file,int __oflag,...)
 {
 #ifdef DEBUG
-  c_printf("open64(%s,%i) called\n",__file,__oflag);
+  write_string("open64(%s,%i) called\n",__file,__oflag);
 #endif
   return notImpl_int();
 }
@@ -640,7 +642,7 @@ int open64(const char *__file,int __oflag,...)
 int fputc(int c, FILE *stream)
 {
 #ifdef DEBUG
-  c_printf("fputc(%i,%p) called\n",c,stream);
+  write_string("fputc(%i,%p) called\n",c,stream);
 #endif
   return notImpl_int();
 }
@@ -648,7 +650,7 @@ int fputc(int c, FILE *stream)
 int fputs(const char *s, FILE *stream)
 {
 #ifdef DEBUG
-  c_printf("fputs(%s,%p) called\n",s,stream);
+  write_string("fputs(%s,%p) called\n",s,stream);
 #endif
   return notImpl_int();
 }
@@ -656,7 +658,7 @@ int fputs(const char *s, FILE *stream)
 size_t fwrite(const void *ptr, size_t size, size_t nmemb, FILE *stream)
 {
 #ifdef DEBUG
-  c_printf("fwrite(%p,%u,%u,%p) called\n",ptr,size,nmemb,stream);
+  write_string("fwrite(%p,%u,%u,%p) called\n",ptr,size,nmemb,stream);
 #endif
   return notImpl_int();
 }
@@ -664,7 +666,7 @@ size_t fwrite(const void *ptr, size_t size, size_t nmemb, FILE *stream)
 int fflush(FILE *stream)
 {
 #ifdef DEBUG
-  c_printf("fflush(%p) called\n",stream);
+  write_string("fflush(%p) called\n",stream);
 #endif
   return notImpl_int();
 }
@@ -707,7 +709,7 @@ struct stat64
 int __xstat64(int __ver,__const char *__filename,struct stat64 *__stat_buf)
 {
 #ifdef DEBUG
-  c_printf("__xstat64(%i,%s,%p) called\n",__ver,__filename,__stat_buf);
+  write_string("__xstat64(%i,%s,%p) called\n",__ver,__filename,__stat_buf);
 #endif
   return notImpl_int();
 }
@@ -719,7 +721,7 @@ int __xstat64(int __ver,__const char *__filename,struct stat64 *__stat_buf)
 DIR *opendir(const char *name)
 {
 #ifdef DEBUG
-  c_printf("opendir(%s) called\n",name);
+  write_string("opendir(%s) called\n",name);
 #endif
   return notImpl_ptr();
 }
@@ -727,7 +729,7 @@ DIR *opendir(const char *name)
 int closedir(DIR *dir)
 {
 #ifdef DEBUG
-  c_printf("closedir(%p) called\n",dir);
+  write_string("closedir(%p) called\n",dir);
 #endif
   return notImpl_int();
 }
@@ -735,7 +737,7 @@ int closedir(DIR *dir)
 char *getcwd(char *buf, size_t size)
 {
 #ifdef DEBUG
-  c_printf("getcwd(%p,%u) called\n",buf,size);
+  write_string("getcwd(%p,%u) called\n",buf,size);
 #endif
   static const char pwd[] = "/";
   if (size<sizeof(pwd)) {
@@ -749,7 +751,7 @@ char *getcwd(char *buf, size_t size)
 int chdir(const char *path)
 {
 #ifdef DEBUG
-  c_printf("chdir(%s) called\n",path);
+  write_string("chdir(%s) called\n",path);
 #endif
   return notImpl_int();
 }
@@ -757,7 +759,7 @@ int chdir(const char *path)
 int readlink(const char *path, char *buf, size_t bufsiz)
 {
 #ifdef DEBUG
-  c_printf("readlink(%s,%p,%u called\n",path,buf,bufsiz);
+  write_string("readlink(%s,%p,%u called\n",path,buf,bufsiz);
 #endif
   return notImpl_int();
 }
@@ -765,7 +767,7 @@ int readlink(const char *path, char *buf, size_t bufsiz)
 int rename(const char *oldpath, const char *newpath)
 {
 #ifdef DEBUG
-  c_printf("rename(%s,%s) called\n",oldpath,newpath);
+  write_string("rename(%s,%s) called\n",oldpath,newpath);
 #endif
   return notImpl_int();
 }
@@ -773,7 +775,7 @@ int rename(const char *oldpath, const char *newpath)
 int unlink(const char *pathname)
 {
 #ifdef DEBUG
-  c_printf("unlink(%s) called\n",pathname);
+  write_string("unlink(%s) called\n",pathname);
 #endif
   return notImpl_int();
 }
@@ -790,7 +792,7 @@ struct dirent64
 struct dirent64 *readdir64(DIR *__dirp)
 {
 #ifdef DEBUG
-  c_printf("readdir64(%p) called\n",__dirp);
+  write_string("readdir64(%p) called\n",__dirp);
 #endif
   return notImpl_ptr();
 }
@@ -800,7 +802,7 @@ struct dirent64 *readdir64(DIR *__dirp)
 size_t strlen(const char *s)
 {
 #ifdef DEBUG
-  /*c_printf("strlen(%s) called\n",s);*/
+  /*write_string("strlen(%s) called\n",s);*/
 #endif
   int i;
   for (i = 0; s[i] != '\0'; i++);
@@ -810,7 +812,7 @@ size_t strlen(const char *s)
 size_t strnlen(const char *s, size_t maxlen)
 {
 #ifdef DEBUG
-  /*c_printf("strnlen(%p,%u) called\n",s,maxlen);*/
+  /*write_string("strnlen(%p,%u) called\n",s,maxlen);*/
 #endif
   int i;
   for (i = 0; i<maxlen && s[i] != '\0'; i++);
@@ -820,7 +822,7 @@ size_t strnlen(const char *s, size_t maxlen)
 char *strcpy(char *dest, const char *src)
 {
 #ifdef DEBUG
-  c_printf("strcpy(%p,%s) called\n",dest,src);
+  write_string("strcpy(%p,%s) called\n",dest,src);
 #endif
   return memmove(dest, src, strlen(src) + 1);
 }
@@ -828,7 +830,7 @@ char *strcpy(char *dest, const char *src)
 char *strcat(char *dest, const char *src)
 {
 #ifdef DEBUG
-  c_printf("strcat(%p,%s) called\n",dest,src);
+  write_string("strcat(%p,%s) called\n",dest,src);
 #endif
   memmove(dest + strlen(dest), src, strlen(src) + 1);
   return dest;
@@ -845,7 +847,7 @@ static int sys_nerr = sizeof(sys_errlist)/sizeof(*sys_errlist);
 char *strerror(int errnum)
 {
 #ifdef DEBUG
-  c_printf("strerror(%i) called\n",errnum);
+  write_string("strerror(%i) called\n",errnum);
 #endif
   if (errnum < sys_nerr && sys_errlist[errnum])
     return sys_errlist[errnum];
@@ -855,14 +857,14 @@ char *strerror(int errnum)
 int strcmp(const char *s1, const char *s2)
 {
 #ifdef DEBUG
-  c_printf("strcmp(%s,%s) called\n",s1,s2);
+  write_string("strcmp(%s,%s) called\n",s1,s2);
 #endif
   while (*s1 && *s2 && *s1==*s2) {
     s1++;
     s2++;
   }
 #ifdef DEBUG
-  c_printf ("strcmp done\n");
+  write_string ("strcmp done\n");
 #endif
   if (*s1<*s2) return -1;
   else if (*s2>*s1) return 1;
@@ -873,7 +875,7 @@ long int __strtol_internal(const char *__nptr,char **__endptr,
 			   int __base, int __group)
 {
 #ifdef DEBUG
-  c_printf("__strtol_internal(%s,%p,%i,%i) called\n",__nptr,__endptr,__base,__group);
+  write_string("__strtol_internal(%s,%p,%i,%i) called\n",__nptr,__endptr,__base,__group);
 #endif
   errno = ERANGE;
   return LONG_MIN;
@@ -883,7 +885,7 @@ long int strtol(const char *nptr,char **endptr,
 			   int base)
 {
 #ifdef DEBUG
-  c_printf("strtol(%s,%p,%i) called\n",nptr,endptr,base);
+  write_string("strtol(%s,%p,%i) called\n",nptr,endptr,base);
 #endif
   errno = ERANGE;
   return LONG_MIN;
@@ -892,7 +894,7 @@ long int strtol(const char *nptr,char **endptr,
 double __strtod_internal(const char *__nptr,char **__endptr,int __group)
 {
 #ifdef DEBUG
-  c_printf("__strtod_internal(%s,%p,%i) called\n",__nptr,__endptr,__group);
+  write_string("__strtod_internal(%s,%p,%i) called\n",__nptr,__endptr,__group);
 #endif
   errno = ERANGE;
   return HUGE_VAL;
@@ -901,7 +903,7 @@ double __strtod_internal(const char *__nptr,char **__endptr,int __group)
 double strtod(const char *nptr,char **endptr)
 {
 #ifdef DEBUG
-  c_printf("strtod(%s,%p) called\n",nptr,endptr);
+  write_string("strtod(%s,%p) called\n",nptr,endptr);
 #endif
   errno = ERANGE;
   return HUGE_VAL;
@@ -910,7 +912,7 @@ double strtod(const char *nptr,char **endptr)
 /* Float */
 int __fpclassify(double x)
 {
-  c_printf("fpclassify called\n");
+  write_string("fpclassify called\n");
   return -1;
 }
 
@@ -1026,7 +1028,7 @@ double floor (double x)
 void *dlopen(const char *filename, int flag)
 {
 #ifdef DEBUG
-  c_printf("dlopen(%s,%i) called\n",filename,flag);
+  write_string("dlopen(%s,%i) called\n",filename,flag);
 #endif
   return notImpl_ptr();
 }
@@ -1034,7 +1036,7 @@ void *dlopen(const char *filename, int flag)
 char *dlerror(void)
 {
 #ifdef DEBUG
-  c_printf("dlerror called\n");
+  write_string("dlerror called\n");
 #endif
   return notImpl_ptr();
 }
@@ -1042,7 +1044,7 @@ char *dlerror(void)
 void *dlsym(void *handle, const char *symbol)
 {
 #ifdef DEBUG
-  c_printf("dlsym(%p,%s) called\n",handle,symbol);
+  write_string("dlsym(%p,%s) called\n",handle,symbol);
 #endif
   return notImpl_ptr();
 }
@@ -1050,7 +1052,7 @@ void *dlsym(void *handle, const char *symbol)
 int dlclose(void *handle)
 {
 #ifdef DEBUG
-  c_printf("dlsym(%p) called\n",handle);
+  write_string("dlsym(%p) called\n",handle);
 #endif
   return notImpl_int();
 }
@@ -1060,7 +1062,7 @@ int dlclose(void *handle)
 int gettimeofday(struct timeval *tv, struct timezone *tz)
 {
 #ifdef DEBUG
-  /*c_printf("gettimeofday(%p,%p) called\n",tv,tz);*/
+  /*write_string("gettimeofday(%p,%p) called\n",tv,tz);*/
 #endif
   /* le temps est grossier: on a des machines à 1GHz en gros, on va dire */
 //   tick_t tick;
@@ -1095,7 +1097,7 @@ struct tms {
 clock_t times(struct tms *buf)
 {
 #ifdef DEBUG
-  c_printf("times(%p) called\n",buf);
+  write_string("times(%p) called\n",buf);
 #endif
   /* De même, on va dire que les ticks sont à 1KHz, en supposant une horloge à 1GHz */
 //   tick_t tick;
@@ -1121,7 +1123,7 @@ struct rlimit
 int getrlimit64(__rlimit_resource_t __resource,struct rlimit *__rlimits)
 {
 #ifdef DEBUG
-  c_printf("getrlimit64(%i,%p) called\n",__resource,__rlimits);
+  write_string("getrlimit64(%i,%p) called\n",__resource,__rlimits);
 #endif
   return notImpl_int();
 }
@@ -1148,7 +1150,7 @@ struct rusage {
 int getrusage(int who, struct rusage* usage)
 {
 #ifdef DEBUG
-  c_printf("getrusage(%i,%p) called\n",who,usage);
+  write_string("getrusage(%i,%p) called\n",who,usage);
 #endif
   return notImpl_int();
 }
