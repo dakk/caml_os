@@ -1,11 +1,11 @@
-CC       = i686-elf-gcc
-AR 		 = i686-elf-ar
+CC       = gcc -m32
+AR 		 = ar --target=elf32-i386
 AS 		 = i686-elf-as
-LD       = i686-elf-ld
+LD       = ld -b elf32-i386
 OBJDUMP	 = i686-elf-objdump
 CFLAGS  += -Wall -Os -fomit-frame-pointer -g -Iarch/i686/  -I.
 OCAMLINCDIRS = -I build -I build/drivers
-OCAMLOPT = /home/dakk/.opam/4.09.1+32bit/bin/ocamlopt $(OCAMLINCDIRS) -unsafe
+OCAMLOPT = /home/dakk/.opam/4.11.1+32bit/bin/ocamlopt $(OCAMLINCDIRS) -unsafe
 OCAMLDEP = ocamldep -native $(OCAMLINCDIRS)
 OCAMLDOC = ocamldoc $(OCAMLINCDIRS)
 LDFLAGS	 = -nostdlib #-ffreestanding -O2
@@ -18,7 +18,7 @@ MK_OBJS	 = $(MK_C:.c=.o)
 OBJS	 = $(MAIN_RUN_OBJS) $(ARCH_RUN_OBJS) $(MK_OBJS)
 
 LIBOCAML	= build/libml.a
-CAMLLIB		= /home/dakk/.opam/4.09.1+32bit/lib/ocaml/
+CAMLLIB		= /home/dakk/.opam/4.11.1+32bit/lib/ocaml/
 OCAMLKERNEL	= build/mlkernel.o
 MLI=mem.mli $(wildcard drivers/*.mli) orc.mli
 ML=mem.ml $(wildcard drivers/*.ml) orc.ml kmain.ml 

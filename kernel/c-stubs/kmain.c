@@ -9,6 +9,11 @@ extern void caml_main(char **args);
 
 extern void _begin, _ro_end, _end, __bss_start, __bss_end;
 
+
+void write_string(char *s, ...) {
+
+}
+
 void setup_memory(void *start, void *end)
 {
 	int s = sizeof(void *);
